@@ -1,0 +1,48 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+import joblib
+
+df = pd.read_csv("Iris.csv")
+
+print("First 5 rows:\n", df.head())
+print("\nMissing values:\n", df.isnull().sum())
+
+if 'Id' in df.columns:
+    df.drop('Id', axis=1, inplace=True)
+
+label_encoder = LabelEncoder()
+df['Species'] = label_encoder.fit_transform(df['Species'])
+
+sns.pairplot(df, hue="Species", palette="husl")
+plt.suptitle("Iris Pairplot", y=1.02)
+plt.show()
+
+X = df.drop("Species", axis=1)
+y = df["Species"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train_scaled, y_train)
+
+y_pred = model.predict(X_test_scaled)
+
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+print("Accuracy Score:", accuracy_score(y_test, y_pred))
+
+joblib.dump(model, 'iris_model.pkl')
+joblib.dump(scaler, 'iris_scaler.pkl')
+print("\nModel and scaler saved successfully as 'iris_model.pkl' and 'iris_scaler.pkl'.")
